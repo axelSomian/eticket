@@ -1,0 +1,41 @@
+generator client {
+  provider        = "prisma-client-js"
+  output          = "../app/generated/prisma"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum TicketType {
+  VIP
+  STANDARD
+}
+
+enum TicketStatus {
+  VALID
+  USED
+  CANCELLED
+}
+
+model Ticket {
+  id           String       @id @default(uuid())
+  ticketNumber String       @unique
+  firstName    String
+  lastName     String
+  email        String?
+  phone        String?
+  ticketType   TicketType   @default(STANDARD)
+  tableNumber  String?
+  note         String?
+  status       TicketStatus @default(VALID)
+  signature    String
+  usedAt       DateTime?
+  scannedBy    String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@index([ticketNumber])
+  @@index([status])
+}
