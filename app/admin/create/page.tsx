@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, useEffect, FormEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -12,24 +12,42 @@ type CreatedTicket = {
     lastName: string;
     email: string | null;
     ticketType: string;
-    tableNumber: string | null;
+    table: { number: string } | null;
   };
   qrCodeDataUrl: string;
+};
+
+type TableOption = {
+  id: string;
+  number: string;
+  capacity: number;
+  isActive: boolean;
+  occupied: number;
+  remaining: number;
 };
 
 export default function CreateTicketPage() {
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
-    email: "",
     phone: "",
     ticketType: "STANDARD",
-    tableNumber: "",
+    tableId: "",
     note: "",
   });
+  const [tables, setTables] = useState<TableOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [created, setCreated] = useState<CreatedTicket | null>(null);
+
+  useEffect(() => {
+    fetch("/api/admin/tables")
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data)) setTables(data);
+      })
+      .catch(() => {});
+  }, []);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
@@ -63,10 +81,9 @@ export default function CreateTicketPage() {
     setForm({
       firstName: "",
       lastName: "",
-      email: "",
       phone: "",
       ticketType: "STANDARD",
-      tableNumber: "",
+      tableId: "",
       note: "",
     });
   }
@@ -161,19 +178,6 @@ export default function CreateTicketPage() {
           </div>
         </div>
 
-        {/* Email */}
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-1.5">Email</label>
-          <input
-            name="email"
-            type="email"
-            value={form.email}
-            onChange={handleChange}
-            placeholder="jean@exemple.com"
-            className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition text-sm"
-          />
-        </div>
-
         {/* Téléphone */}
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-1.5">Téléphone</label>
@@ -202,14 +206,31 @@ export default function CreateTicketPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1.5">N° de table</label>
-            <input
-              name="tableNumber"
-              value={form.tableNumber}
+            <label className="block text-sm font-medium text-gray-300 mb-1.5">
+              Table <span className="text-amber-400">*</span>
+            </label>
+            <select
+              name="tableId"
+              value={form.tableId}
               onChange={handleChange}
-              placeholder="Table 5"
-              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition text-sm"
-            />
+              required
+              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition text-sm"
+            >
+              <option value="" disabled hidden>Sélectionner une table</option>
+              {tables.map((t) => {
+                const full = t.remaining <= 0 || !t.isActive;
+                const label = !t.isActive
+                  ? `Table ${t.number} (Désactivée)`
+                  : t.remaining <= 0
+                  ? `Table ${t.number} (Complet)`
+                  : `Table ${t.number} (${t.remaining} place${t.remaining > 1 ? "s" : ""} restante${t.remaining > 1 ? "s" : ""})`;
+                return (
+                  <option key={t.id} value={t.id} disabled={full}>
+                    {label}
+                  </option>
+                );
+              })}
+            </select>
           </div>
         </div>
 

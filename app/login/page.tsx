@@ -35,6 +35,22 @@ export default async function LoginPage({
           )}
 
           <div>
+            <label htmlFor="username" className="block text-sm font-medium text-gray-300 mb-2">
+              Nom d&apos;utilisateur
+            </label>
+            <input
+              id="username"
+              type="text"
+              name="username"
+              placeholder="admin"
+              required
+              autoComplete="username"
+              autoCapitalize="none"
+              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition"
+            />
+          </div>
+
+          <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
               Mot de passe
             </label>
@@ -51,7 +67,7 @@ export default async function LoginPage({
 
           {error && (
             <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-2">
-              Mot de passe incorrect
+              Identifiants incorrects
             </p>
           )}
 

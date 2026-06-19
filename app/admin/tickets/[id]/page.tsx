@@ -11,7 +11,10 @@ export default async function TicketDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const ticket = await prisma.ticket.findUnique({ where: { id } });
+  const ticket = await prisma.ticket.findUnique({
+    where: { id },
+    include: { table: { select: { number: true } } },
+  });
   if (!ticket) notFound();
 
   const qrData = JSON.stringify({ id: ticket.id, sig: ticket.signature });
@@ -59,7 +62,7 @@ export default async function TicketDetailPage({
             <Row label="Nom complet" value={`${ticket.firstName} ${ticket.lastName}`} />
             {ticket.email && <Row label="Email" value={ticket.email} />}
             {ticket.phone && <Row label="Téléphone" value={ticket.phone} />}
-            {ticket.tableNumber && <Row label="Table" value={ticket.tableNumber} />}
+            {ticket.table?.number && <Row label="Table" value={ticket.table.number} />}
             {ticket.note && <Row label="Note" value={ticket.note} />}
             <Row
               label="Créé le"

@@ -11,7 +11,10 @@ export default async function PublicTicketPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const ticket = await prisma.ticket.findUnique({ where: { id } });
+  const ticket = await prisma.ticket.findUnique({
+    where: { id },
+    include: { table: { select: { number: true } } },
+  });
   if (!ticket) notFound();
 
   const qrData = JSON.stringify({ id: ticket.id, sig: ticket.signature });
@@ -79,10 +82,10 @@ export default async function PublicTicketPage({
 
           {/* Détails */}
           <div className="grid grid-cols-2 gap-3 text-sm">
-            {ticket.tableNumber && (
+            {ticket.table?.number && (
               <div className="bg-gray-800/60 rounded-xl px-3 py-2">
                 <p className="text-gray-500 text-xs mb-0.5">Table</p>
-                <p className="text-white font-semibold">{ticket.tableNumber}</p>
+                <p className="text-white font-semibold">{ticket.table.number}</p>
               </div>
             )}
             <div className="bg-gray-800/60 rounded-xl px-3 py-2">

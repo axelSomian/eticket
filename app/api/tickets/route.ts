@@ -29,6 +29,7 @@ export async function GET(req: NextRequest) {
         : {}),
     },
     orderBy: { createdAt: "desc" },
+    include: { table: { select: { number: true } } },
   });
 
   return NextResponse.json(tickets);
@@ -41,10 +42,36 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { firstName, lastName, email, phone, ticketType, tableNumber, note } = body;
+  const { firstName, lastName, phone, ticketType, tableId, note } = body;
 
   if (!firstName?.trim() || !lastName?.trim()) {
     return NextResponse.json({ error: "Prénom et nom requis" }, { status: 400 });
+  }
+
+  if (!tableId) {
+    return NextResponse.json({ error: "La sélection d'une table est obligatoire" }, { status: 400 });
+  }
+
+  // Validate table
+  if (tableId) {
+    const table = await prisma.table.findUnique({
+      where: { id: tableId },
+      include: {
+        _count: {
+          select: { tickets: { where: { status: { in: ["VALID", "USED"] } } } },
+        },
+      },
+    });
+
+    if (!table) {
+      return NextResponse.json({ error: "Table introuvable" }, { status: 400 });
+    }
+    if (!table.isActive) {
+      return NextResponse.json({ error: "Cette table est désactivée" }, { status: 400 });
+    }
+    if (table._count.tickets >= table.capacity) {
+      return NextResponse.json({ error: "Cette table est complète" }, { status: 400 });
+    }
   }
 
   const count = await prisma.ticket.count();
@@ -67,13 +94,13 @@ export async function POST(req: NextRequest) {
       ticketNumber,
       firstName: firstName.trim(),
       lastName: lastName.trim(),
-      email: email?.trim() || null,
       phone: phone?.trim() || null,
       ticketType: ticketType === "VIP" ? "VIP" : "STANDARD",
-      tableNumber: tableNumber?.trim() || null,
+      tableId: tableId || null,
       note: note?.trim() || null,
       signature,
     },
+    include: { table: { select: { number: true } } },
   });
 
   return NextResponse.json({ ticket, qrCodeDataUrl }, { status: 201 });

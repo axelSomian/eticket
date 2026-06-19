@@ -1,33 +1,47 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
+import { createSessionToken, SESSION_COOKIE_NAME, SessionRole } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import bcrypt from "bcryptjs";
+
+function getBaseUrl(req: NextRequest): string {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  if (appUrl) return appUrl;
+  const host = req.headers.get("host") || "localhost:3001";
+  const proto = req.headers.get("x-forwarded-proto") || "http";
+  return `${proto}://${host}`;
+}
+
+function isSafeRedirect(url: string): boolean {
+  return typeof url === "string" && url.startsWith("/") && !url.startsWith("//");
+}
 
 export async function POST(req: NextRequest) {
   const formData = await req.formData();
+  const username = (formData.get("username") as string)?.trim();
   const password = formData.get("password") as string;
-  const redirectTo = (formData.get("redirect") as string) || "";
+  const redirectParam = (formData.get("redirect") as string) || "";
+  const redirectTo = isSafeRedirect(redirectParam) ? redirectParam : "";
 
-  const adminPassword = process.env.ADMIN_PASSWORD;
-  const scannerPassword = process.env.SCANNER_PASSWORD;
+  const base = getBaseUrl(req);
+  const loginUrl = new URL("/login", base);
+  if (redirectTo) loginUrl.searchParams.set("redirect", redirectTo);
 
-  let role: "admin" | "scanner" | null = null;
-  if (password === adminPassword) role = "admin";
-  else if (password === scannerPassword) role = "scanner";
-
-  if (!role) {
-    const host = req.headers.get("host") || "localhost:3001";
-    const proto = req.headers.get("x-forwarded-proto") || "http";
-    const loginUrl = new URL("/login", `${proto}://${host}`);
+  if (!username || !password) {
     loginUrl.searchParams.set("error", "1");
-    if (redirectTo) loginUrl.searchParams.set("redirect", redirectTo);
     return NextResponse.redirect(loginUrl, 303);
   }
 
-  const dest = redirectTo || (role === "admin" ? "/admin" : "/scan");
-  const token = createSessionToken(role);
+  const user = await prisma.user.findUnique({ where: { username } }).catch(() => null);
+  const valid = user ? await bcrypt.compare(password, user.password) : false;
 
-  const host = req.headers.get("host") || "localhost:3001";
-  const proto = req.headers.get("x-forwarded-proto") || "http";
-  const base = `${proto}://${host}`;
+  if (!valid || !user) {
+    loginUrl.searchParams.set("error", "1");
+    return NextResponse.redirect(loginUrl, 303);
+  }
+
+  const role: SessionRole = user.role === "ADMIN" ? "admin" : "scanner";
+  const dest = redirectTo || (role === "admin" ? "/admin" : "/scan");
+  const token = await createSessionToken(role, user.id, user.username);
 
   const res = NextResponse.redirect(new URL(dest, base), 303);
   res.cookies.set(SESSION_COOKIE_NAME, token, {

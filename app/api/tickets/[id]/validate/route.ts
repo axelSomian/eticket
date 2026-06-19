@@ -23,7 +23,10 @@ export async function POST(
   try {
     // Transaction atomique — empêche le double scan concurrent
     const ticket = await prisma.$transaction(async (tx) => {
-      const t = await tx.ticket.findUnique({ where: { id } });
+      const t = await tx.ticket.findUnique({
+        where: { id },
+        include: { table: { select: { number: true } } },
+      });
 
       if (!t) {
         throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
@@ -48,6 +51,7 @@ export async function POST(
           usedAt: new Date(),
           scannedBy: scannedBy || "Scanner",
         },
+        include: { table: { select: { number: true } } },
       });
     });
 
@@ -58,7 +62,7 @@ export async function POST(
         firstName: ticket.firstName,
         lastName: ticket.lastName,
         ticketType: ticket.ticketType,
-        tableNumber: ticket.tableNumber,
+        tableNumber: ticket.table?.number ?? null,
       },
     });
   } catch (err: unknown) {

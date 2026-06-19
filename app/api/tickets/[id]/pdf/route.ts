@@ -18,7 +18,10 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const ticket = await prisma.ticket.findUnique({ where: { id } });
+  const ticket = await prisma.ticket.findUnique({
+    where: { id },
+    include: { table: { select: { number: true } } },
+  });
 
   if (!ticket) {
     return NextResponse.json({ error: "Ticket introuvable" }, { status: 404 });
@@ -120,7 +123,7 @@ export async function GET(
   // Infos
   const rows: { label: string; value: string }[] = [
     { label: "TYPE", value: ticket.ticketType === "VIP" ? "Billet VIP" : "Billet Standard" },
-    ...(ticket.tableNumber ? [{ label: "TABLE", value: ticket.tableNumber }] : []),
+    ...(ticket.table?.number ? [{ label: "TABLE", value: ticket.table.number }] : []),
     ...(ticket.email ? [{ label: "EMAIL", value: ticket.email }] : []),
   ];
 

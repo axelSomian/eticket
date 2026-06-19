@@ -2,11 +2,11 @@ import { requireAdmin } from "@/lib/auth";
 import AdminNav from "@/components/AdminNav";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  await requireAdmin();
+  const session = await requireAdmin();
 
   return (
     <div className="min-h-screen bg-gray-950">
-      <AdminNav />
+      <AdminNav username={session.username} />
       <main className="max-w-6xl mx-auto px-4 py-8">{children}</main>
     </div>
   );
