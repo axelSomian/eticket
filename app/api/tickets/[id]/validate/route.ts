@@ -21,12 +21,8 @@ export async function POST(
   }
 
   try {
-    // Transaction atomique — empêche le double scan concurrent
     const ticket = await prisma.$transaction(async (tx) => {
-      const t = await tx.ticket.findUnique({
-        where: { id },
-        include: { table: { select: { number: true } } },
-      });
+      const t = await tx.ticket.findUnique({ where: { id } });
 
       if (!t) {
         throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
@@ -46,12 +42,7 @@ export async function POST(
 
       return tx.ticket.update({
         where: { id },
-        data: {
-          status: "USED",
-          usedAt: new Date(),
-          scannedBy: scannedBy || "Scanner",
-        },
-        include: { table: { select: { number: true } } },
+        data: { status: "USED", usedAt: new Date(), scannedBy: scannedBy || "Scanner" },
       });
     });
 
@@ -59,14 +50,11 @@ export async function POST(
       result: "VALID",
       ticket: {
         ticketNumber: ticket.ticketNumber,
-        firstName: ticket.firstName,
-        lastName: ticket.lastName,
         ticketType: ticket.ticketType,
-        tableNumber: ticket.table?.number ?? null,
       },
     });
   } catch (err: unknown) {
-    const e = err as { code?: string; ticket?: { usedAt?: Date | null; ticketNumber?: string; firstName?: string; lastName?: string } };
+    const e = err as { code?: string; ticket?: { usedAt?: Date | null; ticketNumber?: string } };
 
     if (e.code === "NOT_FOUND") {
       return NextResponse.json({ result: "INVALID", reason: "Ticket introuvable" }, { status: 404 });

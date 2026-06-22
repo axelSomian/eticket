@@ -7,21 +7,18 @@ import QRCode from "qrcode";
 const W = 600;
 const H = 240;
 
-const GOLD = rgb(0.937, 0.682, 0.196);       // #EFB032
-const DARK = rgb(0.063, 0.071, 0.094);        // #101218
+const GOLD = rgb(0.941, 0.753, 0.251);       // #F0C040
+const DARK = rgb(0.102, 0.059, 0.027);        // #1A0F07
 const WHITE = rgb(1, 1, 1);
-const GRAY = rgb(0.55, 0.55, 0.60);
-const LIGHT = rgb(0.94, 0.94, 0.96);
+const GRAY = rgb(0.627, 0.502, 0.314);        // #A08050
+const LIGHT = rgb(0.980, 0.941, 0.902);       // #FAF0E6
 
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const ticket = await prisma.ticket.findUnique({
-    where: { id },
-    include: { table: { select: { number: true } } },
-  });
+  const ticket = await prisma.ticket.findUnique({ where: { id } });
 
   if (!ticket) {
     return NextResponse.json({ error: "Ticket introuvable" }, { status: 404 });
@@ -64,15 +61,10 @@ export async function GET(
   const dotCount = 18;
   const dotStep = H / (dotCount + 1);
   for (let i = 1; i <= dotCount; i++) {
-    page.drawCircle({
-      x: leftW + 1,
-      y: i * dotStep,
-      size: 4,
-      color: DARK,
-    });
+    page.drawCircle({ x: leftW + 1, y: i * dotStep, size: 4, color: DARK });
   }
 
-  // ── Zone centrale (infos invité) ────────────────────────────────
+  // ── Zone centrale (infos ticket) ────────────────────────────────
   const cx = leftW + 22;
   const qrSize = 130;
   const qrX = W - qrSize - 20;
@@ -86,12 +78,12 @@ export async function GET(
     color: GOLD,
   });
 
-  // Badge VIP
-  if (ticket.ticketType === "VIP") {
+  // Badge GBONHI
+  if (ticket.ticketType === "GBONHI") {
     const badgeX = cx + fontBold.widthOfTextAtSize(ticket.ticketNumber, 11) + 10;
-    page.drawRectangle({ x: badgeX, y: H - 42, width: 34, height: 16, color: GOLD });
-    page.drawText("VIP", {
-      x: badgeX + 6,
+    page.drawRectangle({ x: badgeX, y: H - 42, width: 60, height: 16, color: GOLD });
+    page.drawText("GBONHI", {
+      x: badgeX + 5,
       y: H - 37,
       size: 9,
       font: fontBold,
@@ -99,22 +91,31 @@ export async function GET(
     });
   }
 
-  // Nom de l'invité
-  const fullName = `${ticket.firstName.toUpperCase()} ${ticket.lastName.toUpperCase()}`;
-  const nameSize = fullName.length > 22 ? 20 : 24;
-  page.drawText(fullName, {
+  // Type d'offre en grand
+  const offreLabel = ticket.ticketType === "GBONHI" ? "OFFRE GBONHI" : "BILLET INDIVIDUEL";
+  page.drawText(offreLabel, {
     x: cx,
     y: H - 80,
-    size: nameSize,
+    size: 20,
     font: fontBold,
     color: WHITE,
     maxWidth: qrX - cx - 16,
   });
 
+  // Sous-label
+  const sousLabel = ticket.ticketType === "GBONHI" ? "6 places incluses" : "1 place";
+  page.drawText(sousLabel, {
+    x: cx,
+    y: H - 102,
+    size: 10,
+    font: fontReg,
+    color: GRAY,
+  });
+
   // Séparateur
   page.drawLine({
-    start: { x: cx, y: H - 95 },
-    end: { x: qrX - 16, y: H - 95 },
+    start: { x: cx, y: H - 115 },
+    end: { x: qrX - 16, y: H - 115 },
     thickness: 0.5,
     color: GRAY,
     opacity: 0.4,
@@ -122,13 +123,11 @@ export async function GET(
 
   // Infos
   const rows: { label: string; value: string }[] = [
-    { label: "TYPE", value: ticket.ticketType === "VIP" ? "Billet VIP" : "Billet Standard" },
-    ...(ticket.table?.number ? [{ label: "TABLE", value: ticket.table.number }] : []),
-    ...(ticket.email ? [{ label: "EMAIL", value: ticket.email }] : []),
+    { label: "OFFRE", value: ticket.ticketType === "GBONHI" ? "Gbonhi — 50 mil" : "Individuel — 10 mil" },
   ];
 
   rows.forEach((row, i) => {
-    const y = H - 122 - i * 30;
+    const y = H - 140 - i * 30;
     page.drawText(row.label, { x: cx, y: y + 12, size: 7, font: fontBold, color: GOLD, opacity: 0.8 });
     page.drawText(row.value, { x: cx, y: y, size: 11, font: fontReg, color: LIGHT });
   });
@@ -139,17 +138,15 @@ export async function GET(
     errorCorrectionLevel: "H",
     margin: 1,
     width: qrSize * 2,
-    color: { dark: "#101218", light: "#FFFFFF" },
+    color: { dark: "#1A0F07", light: "#FFFFFF" },
   });
 
   const qrImage = await pdfDoc.embedPng(qrPngBuffer);
   const qrY = (H - qrSize) / 2;
 
-  // Fond blanc autour du QR
   page.drawRectangle({ x: qrX - 6, y: qrY - 6, width: qrSize + 12, height: qrSize + 12, color: WHITE });
   page.drawImage(qrImage, { x: qrX, y: qrY, width: qrSize, height: qrSize });
 
-  // Texte sous le QR
   page.drawText("Scanner à l'entrée", {
     x: qrX - 2,
     y: qrY - 18,
@@ -170,13 +167,11 @@ export async function GET(
 
   const pdfBytes = await pdfDoc.save();
 
-  const filename = `ticket-${ticket.ticketNumber}-${ticket.lastName.toLowerCase()}.pdf`;
-
   return new NextResponse(Buffer.from(pdfBytes), {
     status: 200,
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="${filename}"`,
+      "Content-Disposition": `attachment; filename="ticket-${ticket.ticketNumber}.pdf"`,
       "Cache-Control": "no-store",
     },
   });

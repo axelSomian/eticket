@@ -18,7 +18,6 @@ export default function AdminNav({ username }: { username: string }) {
     { href: "/admin", label: "Dashboard" },
     { href: "/admin/create", label: "Créer un ticket" },
     { href: "/admin/tickets", label: "Tickets" },
-    { href: "/admin/tables", label: "Tables" },
     { href: "/admin/users", label: "Utilisateurs" },
   ];
 

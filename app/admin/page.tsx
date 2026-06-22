@@ -8,7 +8,7 @@ export default async function AdminDashboard() {
     prisma.ticket.count({ where: { status: "VALID" } }),
     prisma.ticket.count({ where: { status: "USED" } }),
     prisma.ticket.count({ where: { status: "CANCELLED" } }),
-    prisma.ticket.count({ where: { ticketType: "VIP" } }),
+    prisma.ticket.count({ where: { ticketType: "GBONHI" } }),
   ]);
 
   const recentTickets = await prisma.ticket.findMany({
@@ -31,10 +31,8 @@ export default async function AdminDashboard() {
         </Link>
       </div>
 
-      {/* Live stats (capacity bar + cards) */}
       <LiveStats initial={{ total, valid, used, cancelled, vip }} />
 
-      {/* Tickets récents */}
       {recentTickets.length > 0 && (
         <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
           <div className="px-4 sm:px-6 py-4 border-b border-gray-800 flex justify-between items-center">
@@ -51,13 +49,15 @@ export default async function AdminDashboard() {
                 className="flex items-center justify-between gap-3 px-4 sm:px-6 py-4 hover:bg-gray-800/50 transition"
               >
                 <div className="min-w-0">
-                  <p className="text-white font-medium truncate">{t.firstName} {t.lastName}</p>
-                  <p className="text-gray-500 text-sm font-mono">{t.ticketNumber}</p>
+                  <p className="text-white font-medium font-mono">{t.ticketNumber}</p>
+                  <p className="text-gray-500 text-sm">
+                    {t.ticketType === "GBONHI" ? "Offre Gbonhi" : "Individuel"}
+                  </p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  {t.ticketType === "VIP" && (
-                    <span className="text-xs bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2 py-0.5 rounded-full hidden sm:inline">
-                      VIP
+                  {t.ticketType === "GBONHI" && (
+                    <span className="text-xs bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full hidden sm:inline">
+                      Gbonhi
                     </span>
                   )}
                   <span className={`text-xs px-2 py-0.5 rounded-full border ${

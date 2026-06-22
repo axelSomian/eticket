@@ -17,19 +17,9 @@ export async function GET(req: NextRequest) {
   const tickets = await prisma.ticket.findMany({
     where: {
       ...(status ? { status: status as "VALID" | "USED" | "CANCELLED" } : {}),
-      ...(search
-        ? {
-            OR: [
-              { firstName: { contains: search, mode: "insensitive" } },
-              { lastName: { contains: search, mode: "insensitive" } },
-              { email: { contains: search, mode: "insensitive" } },
-              { ticketNumber: { contains: search, mode: "insensitive" } },
-            ],
-          }
-        : {}),
+      ...(search ? { ticketNumber: { contains: search, mode: "insensitive" } } : {}),
     },
     orderBy: { createdAt: "desc" },
-    include: { table: { select: { number: true } } },
   });
 
   return NextResponse.json(tickets);
@@ -42,66 +32,36 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { firstName, lastName, phone, ticketType, tableId, note } = body;
+  const { ticketType, note } = body;
 
-  if (!firstName?.trim() || !lastName?.trim()) {
-    return NextResponse.json({ error: "Prénom et nom requis" }, { status: 400 });
-  }
+  const type = ticketType === "GBONHI" ? "GBONHI" : "INDIVIDUEL";
+  const quantity = type === "GBONHI" ? 6 : 1;
 
-  if (!tableId) {
-    return NextResponse.json({ error: "La sélection d'une table est obligatoire" }, { status: 400 });
-  }
+  const baseCount = await prisma.ticket.count();
 
-  // Validate table
-  if (tableId) {
-    const table = await prisma.table.findUnique({
-      where: { id: tableId },
-      include: {
-        _count: {
-          select: { tickets: { where: { status: { in: ["VALID", "USED"] } } } },
-        },
-      },
+  const tickets = [];
+  const qrCodes = [];
+
+  for (let i = 0; i < quantity; i++) {
+    const ticketNumber = generateTicketNumber(baseCount + i + 1);
+    const id = crypto.randomUUID();
+    const signature = signTicket(id, ticketNumber);
+
+    const qrData = JSON.stringify({ id, sig: signature });
+    const qrCodeDataUrl = await QRCode.toDataURL(qrData, {
+      errorCorrectionLevel: "H",
+      margin: 2,
+      width: 300,
+      color: { dark: "#000000", light: "#ffffff" },
     });
 
-    if (!table) {
-      return NextResponse.json({ error: "Table introuvable" }, { status: 400 });
-    }
-    if (!table.isActive) {
-      return NextResponse.json({ error: "Cette table est désactivée" }, { status: 400 });
-    }
-    if (table._count.tickets >= table.capacity) {
-      return NextResponse.json({ error: "Cette table est complète" }, { status: 400 });
-    }
+    const ticket = await prisma.ticket.create({
+      data: { id, ticketNumber, ticketType: type, note: note?.trim() || null, signature },
+    });
+
+    tickets.push(ticket);
+    qrCodes.push(qrCodeDataUrl);
   }
 
-  const count = await prisma.ticket.count();
-  const ticketNumber = generateTicketNumber(count + 1);
-
-  const id = crypto.randomUUID();
-  const signature = signTicket(id, ticketNumber);
-
-  const qrData = JSON.stringify({ id, sig: signature });
-  const qrCodeDataUrl = await QRCode.toDataURL(qrData, {
-    errorCorrectionLevel: "H",
-    margin: 2,
-    width: 300,
-    color: { dark: "#000000", light: "#ffffff" },
-  });
-
-  const ticket = await prisma.ticket.create({
-    data: {
-      id,
-      ticketNumber,
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
-      phone: phone?.trim() || null,
-      ticketType: ticketType === "VIP" ? "VIP" : "STANDARD",
-      tableId: tableId || null,
-      note: note?.trim() || null,
-      signature,
-    },
-    include: { table: { select: { number: true } } },
-  });
-
-  return NextResponse.json({ ticket, qrCodeDataUrl }, { status: 201 });
+  return NextResponse.json({ tickets, qrCodes }, { status: 201 });
 }

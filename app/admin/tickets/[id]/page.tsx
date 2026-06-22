@@ -11,10 +11,7 @@ export default async function TicketDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const ticket = await prisma.ticket.findUnique({
-    where: { id },
-    include: { table: { select: { number: true } } },
-  });
+  const ticket = await prisma.ticket.findUnique({ where: { id } });
   if (!ticket) notFound();
 
   const qrData = JSON.stringify({ id: ticket.id, sig: ticket.signature });
@@ -39,9 +36,9 @@ export default async function TicketDetailPage({
           <div className="flex items-center justify-between">
             <span className="font-mono text-amber-400 font-bold">{ticket.ticketNumber}</span>
             <div className="flex gap-2">
-              {ticket.ticketType === "VIP" && (
-                <span className="text-xs bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2 py-0.5 rounded-full">
-                  VIP
+              {ticket.ticketType === "GBONHI" && (
+                <span className="text-xs bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full">
+                  Gbonhi
                 </span>
               )}
               <span
@@ -59,10 +56,7 @@ export default async function TicketDetailPage({
           </div>
 
           <div className="space-y-3 text-sm">
-            <Row label="Nom complet" value={`${ticket.firstName} ${ticket.lastName}`} />
-            {ticket.email && <Row label="Email" value={ticket.email} />}
-            {ticket.phone && <Row label="Téléphone" value={ticket.phone} />}
-            {ticket.table?.number && <Row label="Table" value={ticket.table.number} />}
+            <Row label="Offre" value={ticket.ticketType === "GBONHI" ? "Gbonhi (6 places)" : "Individuel"} />
             {ticket.note && <Row label="Note" value={ticket.note} />}
             <Row
               label="Créé le"

@@ -25,8 +25,8 @@ model User {
 }
 
 enum TicketType {
-  VIP
-  STANDARD
+  INDIVIDUEL
+  GBONHI
 }
 
 enum TicketStatus {
@@ -38,13 +38,7 @@ enum TicketStatus {
 model Ticket {
   id           String       @id @default(uuid())
   ticketNumber String       @unique
-  firstName    String
-  lastName     String
-  email        String?
-  phone        String?
-  ticketType   TicketType   @default(STANDARD)
-  tableId      String?
-  table        Table?       @relation(fields: [tableId], references: [id])
+  ticketType   TicketType   @default(INDIVIDUEL)
   note         String?
   status       TicketStatus @default(VALID)
   signature    String
@@ -55,17 +49,4 @@ model Ticket {
 
   @@index([ticketNumber])
   @@index([status])
-  @@index([tableId])
-}
-
-model Table {
-  id        String   @id @default(uuid())
-  number    String   @unique
-  capacity  Int
-  isActive  Boolean  @default(true)
-  tickets   Ticket[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([number])
 }

@@ -1,0 +1,9 @@
+-- Remove name/contact columns
+ALTER TABLE "Ticket" DROP COLUMN "firstName";
+ALTER TABLE "Ticket" DROP COLUMN "lastName";
+ALTER TABLE "Ticket" DROP COLUMN IF EXISTS "email";
+ALTER TABLE "Ticket" DROP COLUMN IF EXISTS "phone";
+
+-- Rename enum values STANDARD → INDIVIDUEL and VIP → GBONHI
+ALTER TYPE "TicketType" RENAME VALUE 'STANDARD' TO 'INDIVIDUEL';
+ALTER TYPE "TicketType" RENAME VALUE 'VIP' TO 'GBONHI';

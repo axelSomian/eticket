@@ -4,8 +4,8 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { BrowserMultiFormatReader } from "@zxing/library";
 
 type ScanResult =
-  | { result: "VALID"; ticket: { ticketNumber: string; firstName: string; lastName: string; ticketType: string; tableNumber: string | null } }
-  | { result: "ALREADY_USED"; reason: string; ticket: { ticketNumber?: string; firstName?: string; lastName?: string } }
+  | { result: "VALID"; ticket: { ticketNumber: string; ticketType: string } }
+  | { result: "ALREADY_USED"; reason: string; ticket: { ticketNumber?: string } }
   | { result: "FAKE"; reason: string }
   | { result: "CANCELLED"; reason: string }
   | { result: "INVALID"; reason: string }
@@ -27,8 +27,8 @@ function playSound(ctx: AudioContext, type: "success" | "warning" | "error") {
   };
 
   if (type === "success") {
-    tone(523, 0,    0.14, 0.35);  // C5
-    tone(784, 0.13, 0.28, 0.35);  // G5
+    tone(523, 0,    0.14, 0.35);
+    tone(784, 0.13, 0.28, 0.35);
   } else if (type === "warning") {
     tone(440, 0,    0.09, 0.3);
     tone(440, 0.16, 0.18, 0.2);
@@ -47,7 +47,6 @@ export default function QRScanner({ username }: { username: string }) {
   const [overlayVisible, setOverlayVisible] = useState(false);
   const [cameraError, setCameraError] = useState("");
 
-  // Unlock AudioContext on first user interaction (required on iOS)
   useEffect(() => {
     const unlock = () => {
       if (!audioCtxRef.current) {
@@ -308,21 +307,19 @@ function ResultScreen({
         {title}
       </p>
 
-      {/* VALID — person info */}
+      {/* VALID — ticket info */}
       {result.result === "VALID" && (
         <div style={{ textAlign: "center", ...stagger(0.25) }}>
           <p
             style={{
               color: "white",
-              fontSize: "clamp(1.6rem, 7vw, 2.5rem)",
+              fontSize: "clamp(1.4rem, 6vw, 2rem)",
               fontWeight: 700,
               marginBottom: "1rem",
-              lineHeight: 1.1,
+              lineHeight: 1.2,
             }}
           >
-            {result.ticket.firstName}
-            <br />
-            {result.ticket.lastName.toUpperCase()}
+            {result.ticket.ticketType === "GBONHI" ? "OFFRE GBONHI" : "BILLET INDIVIDUEL"}
           </p>
           <div style={{ display: "flex", gap: "0.6rem", justifyContent: "center", flexWrap: "wrap" }}>
             <span
@@ -338,12 +335,12 @@ function ResultScreen({
             >
               {result.ticket.ticketNumber}
             </span>
-            {result.ticket.ticketType === "VIP" && (
+            {result.ticket.ticketType === "GBONHI" && (
               <span
                 style={{
-                  background: "rgba(245,158,11,0.15)",
-                  color: "#fbbf24",
-                  border: "1px solid rgba(245,158,11,0.35)",
+                  background: "rgba(240,192,64,0.15)",
+                  color: "#F0C040",
+                  border: "1px solid rgba(240,192,64,0.35)",
                   padding: "0.3rem 0.9rem",
                   borderRadius: "9999px",
                   fontWeight: 700,
@@ -351,33 +348,19 @@ function ResultScreen({
                   letterSpacing: "0.05em",
                 }}
               >
-                VIP
-              </span>
-            )}
-            {result.ticket.tableNumber && (
-              <span
-                style={{
-                  background: "rgba(255,255,255,0.08)",
-                  color: "#d1d5db",
-                  padding: "0.3rem 0.9rem",
-                  borderRadius: "9999px",
-                  fontSize: "0.85rem",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                }}
-              >
-                Table {result.ticket.tableNumber}
+                6 PLACES
               </span>
             )}
           </div>
         </div>
       )}
 
-      {/* ALREADY_USED — name + reason */}
+      {/* ALREADY_USED — ticket number + reason */}
       {result.result === "ALREADY_USED" && (
         <div style={{ textAlign: "center", ...stagger(0.25) }}>
-          {"ticket" in result && result.ticket.firstName && (
-            <p style={{ color: "white", fontSize: "1.75rem", fontWeight: 700, marginBottom: "0.5rem" }}>
-              {result.ticket.firstName} {result.ticket.lastName}
+          {"ticket" in result && result.ticket.ticketNumber && (
+            <p style={{ color: "white", fontSize: "1.2rem", fontWeight: 700, marginBottom: "0.5rem", fontFamily: "monospace" }}>
+              {result.ticket.ticketNumber}
             </p>
           )}
           <p style={{ color: "#fdba74", fontSize: "1rem", opacity: 0.85 }}>{result.reason}</p>
@@ -447,7 +430,7 @@ function ResultScreen({
           padding: "1rem 1.5rem",
           borderRadius: "1rem",
           background: "rgba(255,255,255,0.08)",
-          border: `1px solid rgba(255,255,255,0.12)`,
+          border: "1px solid rgba(255,255,255,0.12)",
           color: "white",
           fontWeight: 600,
           fontSize: "1rem",
@@ -464,19 +447,10 @@ function ResultScreen({
   );
 }
 
-function CheckIcon({
-  color,
-  dimColor,
-  visible,
-}: {
-  color: string;
-  dimColor: string;
-  visible: boolean;
-}) {
-  const C = 2 * Math.PI * 52; // circle circumference r=52
+function CheckIcon({ color, dimColor, visible }: { color: string; dimColor: string; visible: boolean }) {
+  const C = 2 * Math.PI * 52;
   return (
     <div style={{ position: "relative", width: 128, height: 128 }}>
-      {/* Pulsing ring */}
       <div
         style={{
           position: "absolute",
@@ -488,28 +462,18 @@ function CheckIcon({
         }}
       />
       <svg viewBox="0 0 120 120" width="128" height="128">
-        {/* Track circle */}
         <circle cx="60" cy="60" r="52" fill={`${dimColor}55`} stroke={`${color}25`} strokeWidth="2" />
-        {/* Animated circle stroke */}
         <circle
           cx="60" cy="60" r="52"
-          fill="none"
-          stroke={color}
-          strokeWidth="4"
-          strokeLinecap="round"
+          fill="none" stroke={color} strokeWidth="4" strokeLinecap="round"
           strokeDasharray={C}
           strokeDashoffset={visible ? 0 : C}
           transform="rotate(-90 60 60)"
           style={{ transition: `stroke-dashoffset 0.6s ease 0.1s` }}
         />
-        {/* Animated checkmark */}
         <path
           d="M34 60 L52 78 L86 42"
-          fill="none"
-          stroke={color}
-          strokeWidth="5.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+          fill="none" stroke={color} strokeWidth="5.5" strokeLinecap="round" strokeLinejoin="round"
           strokeDasharray="80"
           strokeDashoffset={visible ? 0 : 80}
           style={{ transition: `stroke-dashoffset 0.5s ease 0.7s` }}
@@ -519,15 +483,7 @@ function CheckIcon({
   );
 }
 
-function CrossIcon({
-  color,
-  dimColor,
-  visible,
-}: {
-  color: string;
-  dimColor: string;
-  visible: boolean;
-}) {
+function CrossIcon({ color, dimColor, visible }: { color: string; dimColor: string; visible: boolean }) {
   const C = 2 * Math.PI * 52;
   return (
     <svg viewBox="0 0 120 120" width="128" height="128">
@@ -540,69 +496,36 @@ function CrossIcon({
         transform="rotate(-90 60 60)"
         style={{ transition: `stroke-dashoffset 0.55s ease 0.1s` }}
       />
-      <path
-        d="M38 38 L82 82"
-        fill="none" stroke={color} strokeWidth="5.5" strokeLinecap="round"
-        strokeDasharray="63"
-        strokeDashoffset={visible ? 0 : 63}
+      <path d="M38 38 L82 82" fill="none" stroke={color} strokeWidth="5.5" strokeLinecap="round"
+        strokeDasharray="63" strokeDashoffset={visible ? 0 : 63}
         style={{ transition: `stroke-dashoffset 0.4s ease 0.65s` }}
       />
-      <path
-        d="M82 38 L38 82"
-        fill="none" stroke={color} strokeWidth="5.5" strokeLinecap="round"
-        strokeDasharray="63"
-        strokeDashoffset={visible ? 0 : 63}
+      <path d="M82 38 L38 82" fill="none" stroke={color} strokeWidth="5.5" strokeLinecap="round"
+        strokeDasharray="63" strokeDashoffset={visible ? 0 : 63}
         style={{ transition: `stroke-dashoffset 0.4s ease 0.85s` }}
       />
     </svg>
   );
 }
 
-function WarningIcon({
-  color,
-  dimColor,
-  visible,
-}: {
-  color: string;
-  dimColor: string;
-  visible: boolean;
-}) {
+function WarningIcon({ color, dimColor, visible }: { color: string; dimColor: string; visible: boolean }) {
   const perimiter = 282;
   return (
     <svg viewBox="0 0 120 120" width="128" height="128">
+      <polygon points="60,14 112,100 8,100" fill={`${dimColor}55`} stroke={`${color}25`} strokeWidth="2" strokeLinejoin="round" />
       <polygon
         points="60,14 112,100 8,100"
-        fill={`${dimColor}55`}
-        stroke={`${color}25`}
-        strokeWidth="2"
-        strokeLinejoin="round"
-      />
-      <polygon
-        points="60,14 112,100 8,100"
-        fill="none"
-        stroke={color}
-        strokeWidth="4"
-        strokeLinejoin="round"
+        fill="none" stroke={color} strokeWidth="4" strokeLinejoin="round"
         strokeDasharray={perimiter}
         strokeDashoffset={visible ? 0 : perimiter}
         style={{ transition: `stroke-dashoffset 0.6s ease 0.1s` }}
       />
-      {/* Exclamation stem */}
-      <line
-        x1="60" y1="44" x2="60" y2="73"
-        stroke={color} strokeWidth="5.5" strokeLinecap="round"
-        strokeDasharray="32"
-        strokeDashoffset={visible ? 0 : 32}
+      <line x1="60" y1="44" x2="60" y2="73" stroke={color} strokeWidth="5.5" strokeLinecap="round"
+        strokeDasharray="32" strokeDashoffset={visible ? 0 : 32}
         style={{ transition: `stroke-dashoffset 0.3s ease 0.7s` }}
       />
-      {/* Exclamation dot */}
-      <circle
-        cx="60" cy="86" r="4"
-        fill={color}
-        style={{
-          opacity: visible ? 1 : 0,
-          transition: `opacity 0.3s ease 0.95s`,
-        }}
+      <circle cx="60" cy="86" r="4" fill={color}
+        style={{ opacity: visible ? 1 : 0, transition: `opacity 0.3s ease 0.95s` }}
       />
     </svg>
   );

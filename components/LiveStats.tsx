@@ -22,7 +22,6 @@ export default function LiveStats({ initial }: { initial: LiveStats }) {
         const next: LiveStats = JSON.parse(e.data);
         const prev = prevRef.current;
 
-        // Flash the stat that changed
         if (next.used !== prev.used) setFlash("used");
         else if (next.total !== prev.total) setFlash("total");
         else if (next.cancelled !== prev.cancelled) setFlash("cancelled");
@@ -53,12 +52,11 @@ export default function LiveStats({ initial }: { initial: LiveStats }) {
     { key: "valid" as const, label: "Valides", value: stats.valid, color: "text-green-400" },
     { key: "used" as const, label: "Entrés", value: stats.used, color: "text-blue-400" },
     { key: "cancelled" as const, label: "Annulés", value: stats.cancelled, color: "text-red-400" },
-    { key: "vip" as const, label: "VIP", value: stats.vip, color: "text-purple-400" },
+    { key: "vip" as const, label: "Gbonhi", value: stats.vip, color: "text-amber-400" },
   ];
 
   return (
     <div className="space-y-6">
-      {/* Live indicator + capacity */}
       <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
         <div className="flex justify-between items-center mb-3">
           <div className="flex items-center gap-2">
@@ -88,7 +86,6 @@ export default function LiveStats({ initial }: { initial: LiveStats }) {
         </div>
       </div>
 
-      {/* Stats cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         {cards.map(({ key, label, value, color }) => (
           <div

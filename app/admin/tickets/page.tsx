@@ -15,7 +15,6 @@ function statusClass(s: string) {
 export default async function TicketsListPage() {
   const tickets = await prisma.ticket.findMany({
     orderBy: { createdAt: "desc" },
-    include: { table: { select: { number: true } } },
   });
 
   return (
@@ -52,15 +51,11 @@ export default async function TicketsListPage() {
                   className="flex items-start justify-between gap-3 px-4 py-4 hover:bg-gray-800/50 active:bg-gray-800 transition"
                 >
                   <div className="min-w-0">
-                    <p className="text-white font-medium truncate">
-                      {t.firstName} {t.lastName}
+                    <p className="text-amber-400 text-sm font-mono">{t.ticketNumber}</p>
+                    <p className="text-gray-400 text-xs mt-0.5">
+                      {t.ticketType === "GBONHI" ? "Offre Gbonhi" : "Individuel"}
                     </p>
-                    <p className="text-amber-400 text-xs font-mono mt-0.5">{t.ticketNumber}</p>
-                    {t.email && (
-                      <p className="text-gray-500 text-xs mt-0.5 truncate">{t.email}</p>
-                    )}
                     <p className="text-gray-600 text-xs mt-1">
-                      {t.table?.number ? `Table ${t.table.number} · ` : ""}
                       {new Date(t.createdAt).toLocaleDateString("fr-FR")}
                     </p>
                   </div>
@@ -68,9 +63,9 @@ export default async function TicketsListPage() {
                     <span className={`text-xs px-2 py-0.5 rounded-full border ${statusClass(t.status)}`}>
                       {statusLabel(t.status)}
                     </span>
-                    {t.ticketType === "VIP" && (
-                      <span className="text-xs bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2 py-0.5 rounded-full">
-                        VIP
+                    {t.ticketType === "GBONHI" && (
+                      <span className="text-xs bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full">
+                        Gbonhi
                       </span>
                     )}
                   </div>
@@ -84,9 +79,7 @@ export default async function TicketsListPage() {
                 <thead>
                   <tr className="border-b border-gray-800">
                     <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">N°</th>
-                    <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Invité</th>
-                    <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                    <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Table</th>
+                    <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Offre</th>
                     <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
                     <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">Date</th>
                     <th className="px-6 py-3" />
@@ -97,19 +90,14 @@ export default async function TicketsListPage() {
                     <tr key={t.id} className="hover:bg-gray-800/50 transition">
                       <td className="px-6 py-4 text-sm font-mono text-amber-400 whitespace-nowrap">{t.ticketNumber}</td>
                       <td className="px-6 py-4">
-                        <p className="text-white text-sm font-medium whitespace-nowrap">{t.firstName} {t.lastName}</p>
-                        {t.email && <p className="text-gray-500 text-xs">{t.email}</p>}
-                      </td>
-                      <td className="px-6 py-4">
                         <span className={`text-xs px-2 py-0.5 rounded-full border ${
-                          t.ticketType === "VIP"
-                            ? "bg-purple-500/10 text-purple-400 border-purple-500/20"
+                          t.ticketType === "GBONHI"
+                            ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
                             : "bg-gray-700 text-gray-300 border-gray-600"
                         }`}>
-                          {t.ticketType}
+                          {t.ticketType === "GBONHI" ? "Gbonhi" : "Individuel"}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-400 whitespace-nowrap">{t.table?.number || "—"}</td>
                       <td className="px-6 py-4">
                         <span className={`text-xs px-2 py-0.5 rounded-full border ${statusClass(t.status)}`}>
                           {statusLabel(t.status)}

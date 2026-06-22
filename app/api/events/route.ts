@@ -17,7 +17,7 @@ async function fetchStats(): Promise<LiveStats> {
     prisma.ticket.count({ where: { status: "VALID" } }),
     prisma.ticket.count({ where: { status: "USED" } }),
     prisma.ticket.count({ where: { status: "CANCELLED" } }),
-    prisma.ticket.count({ where: { ticketType: "VIP" } }),
+    prisma.ticket.count({ where: { ticketType: "GBONHI" } }),
   ]);
   return { total, valid, used, cancelled, vip };
 }
@@ -38,11 +38,9 @@ export async function GET() {
         }
       };
 
-      // Send immediately then every 3s
       await send();
       const interval = setInterval(send, 3000);
 
-      // Close after 55s — EventSource reconnects automatically
       setTimeout(() => {
         clearInterval(interval);
         closed = true;
