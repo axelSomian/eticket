@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import ShareTicketButtons from "@/components/ShareTicketButtons";
 
 function statusLabel(s: string) {
   return s === "VALID" ? "Valide" : s === "USED" ? "Scanné" : "Annulé";
@@ -107,9 +108,17 @@ export default async function TicketsListPage() {
                         {new Date(t.createdAt).toLocaleDateString("fr-FR")}
                       </td>
                       <td className="px-6 py-4 text-right whitespace-nowrap">
-                        <Link href={`/admin/tickets/${t.id}`} className="text-amber-400 hover:text-amber-300 text-sm transition">
-                          Détails →
-                        </Link>
+                        <div className="flex items-center justify-end gap-3">
+                          <ShareTicketButtons
+                            ticketId={t.id}
+                            ticketNumber={t.ticketNumber}
+                            ticketType={t.ticketType}
+                            variant="compact"
+                          />
+                          <Link href={`/admin/tickets/${t.id}`} className="text-amber-400 hover:text-amber-300 text-sm transition">
+                            Détails →
+                          </Link>
+                        </div>
                       </td>
                     </tr>
                   ))}

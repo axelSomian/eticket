@@ -4,6 +4,7 @@ import QRCode from "qrcode";
 import Image from "next/image";
 import Link from "next/link";
 import TicketActions from "@/components/TicketActions";
+import ShareTicketButtons from "@/components/ShareTicketButtons";
 
 export default async function TicketDetailPage({
   params,
@@ -97,6 +98,16 @@ export default async function TicketDetailPage({
             Voir le ticket public
           </Link>
         </div>
+      </div>
+
+      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-3">
+        <p className="text-gray-400 text-xs font-medium uppercase tracking-wider">Envoyer le ticket à l&apos;invité</p>
+        <ShareTicketButtons
+          ticketId={ticket.id}
+          ticketNumber={ticket.ticketNumber}
+          ticketType={ticket.ticketType}
+          variant="full"
+        />
       </div>
 
       <TicketActions ticketId={ticket.id} currentStatus={ticket.status} />
