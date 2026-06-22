@@ -3,6 +3,7 @@
 import { useState, FormEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import ShareTicketButtons from "@/components/ShareTicketButtons";
 
 type CreatedTicket = {
   id: string;
@@ -85,7 +86,13 @@ export default function CreateTicketPage() {
             {created.tickets.map((t) => (
               <div key={t.id} className="flex items-center justify-between gap-3 bg-gray-800/50 rounded-xl px-4 py-3">
                 <span className="font-mono text-amber-400 text-sm">{t.ticketNumber}</span>
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2">
+                  <ShareTicketButtons
+                    ticketId={t.id}
+                    ticketNumber={t.ticketNumber}
+                    ticketType={t.ticketType}
+                    variant="compact"
+                  />
                   <Link
                     href={`/ticket/${t.id}`}
                     target="_blank"
@@ -123,6 +130,15 @@ export default function CreateTicketPage() {
               >
                 Détails
               </Link>
+            </div>
+            <div className="w-full border-t border-gray-800 pt-4">
+              <p className="text-gray-500 text-xs mb-3 text-center">Envoyer à l&apos;invité</p>
+              <ShareTicketButtons
+                ticketId={created.tickets[0].id}
+                ticketNumber={created.tickets[0].ticketNumber}
+                ticketType={created.tickets[0].ticketType}
+                variant="full"
+              />
             </div>
           </div>
         )}
