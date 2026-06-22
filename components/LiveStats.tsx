@@ -46,8 +46,6 @@ export default function LiveStats({ initial }: { initial: LiveStats }) {
     };
   }, []);
 
-  const MAX = 250;
-
   const formatFCFA = (n: number) =>
     n.toLocaleString("fr-FR") + " FCFA";
 
@@ -94,25 +92,6 @@ export default function LiveStats({ initial }: { initial: LiveStats }) {
               {live ? "Live" : "Reconnexion…"}
             </span>
           </div>
-        </div>
-      </div>
-
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
-        <div className="flex justify-between items-center mb-3">
-          <span className="text-gray-300 font-medium">Capacité</span>
-          <span className="text-white font-bold">
-            {stats.total} / {MAX}
-          </span>
-        </div>
-        <div className="h-3 bg-gray-800 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-amber-500 rounded-full transition-all duration-700"
-            style={{ width: `${Math.min((stats.total / MAX) * 100, 100)}%` }}
-          />
-        </div>
-        <div className="flex justify-between mt-2">
-          <p className="text-gray-500 text-xs">{MAX - stats.total} places restantes</p>
-          <p className="text-blue-400 text-xs font-medium">{stats.used} entrées</p>
         </div>
       </div>
 
