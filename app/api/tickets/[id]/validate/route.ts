@@ -48,7 +48,7 @@ export async function POST(
         throw Object.assign(new Error("ALREADY_USED"), { code: "ALREADY_USED", ticket: current });
       }
 
-      return tx.ticket.findUnique({ where: { id } });
+      return tx.ticket.findUniqueOrThrow({ where: { id } });
     });
 
     return NextResponse.json({
