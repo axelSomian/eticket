@@ -22,7 +22,8 @@ export default function LiveStats({ initial }: { initial: LiveStats }) {
         const next: LiveStats = JSON.parse(e.data);
         const prev = prevRef.current;
 
-        if (next.used !== prev.used) setFlash("used");
+        if (next.revenue !== prev.revenue) setFlash("revenue");
+        else if (next.used !== prev.used) setFlash("used");
         else if (next.total !== prev.total) setFlash("total");
         else if (next.cancelled !== prev.cancelled) setFlash("cancelled");
 
@@ -47,20 +48,43 @@ export default function LiveStats({ initial }: { initial: LiveStats }) {
 
   const MAX = 250;
 
+  const formatFCFA = (n: number) =>
+    n.toLocaleString("fr-FR") + " FCFA";
+
   const cards = [
     { key: "total" as const, label: "Total invités", value: stats.total, color: "text-amber-400" },
     { key: "valid" as const, label: "Valides", value: stats.valid, color: "text-green-400" },
     { key: "used" as const, label: "Entrés", value: stats.used, color: "text-blue-400" },
     { key: "cancelled" as const, label: "Annulés", value: stats.cancelled, color: "text-red-400" },
-    { key: "vip" as const, label: "Gbonhi", value: stats.vip, color: "text-amber-400" },
+    { key: "vip" as const, label: "Gbonhi (tickets)", value: stats.vip, color: "text-amber-400" },
   ];
 
   return (
     <div className="space-y-6">
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
-        <div className="flex justify-between items-center mb-3">
-          <div className="flex items-center gap-2">
-            <span className="text-gray-300 font-medium">Capacité</span>
+      {/* Revenue card */}
+      <div className={`bg-gray-900 border rounded-2xl p-6 transition-all duration-300 ${
+        flash === "revenue" ? "border-amber-500/50 bg-amber-500/5" : "border-gray-800"
+      }`}>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-gray-400 text-xs font-medium uppercase tracking-wider mb-1">Recettes totales</p>
+            <p className="text-4xl font-bold text-amber-400 transition-all duration-300">
+              {formatFCFA(stats.revenue)}
+            </p>
+            <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
+              <span>
+                <span className="text-white font-medium">{stats.individuelPaid}</span> Individuel
+                {" "}× 10 000
+              </span>
+              <span className="text-gray-700">·</span>
+              <span>
+                <span className="text-white font-medium">{stats.gbonhiOffersPaid}</span> offre
+                {stats.gbonhiOffersPaid > 1 ? "s" : ""} Gbonhi
+                {" "}× 50 000
+              </span>
+            </div>
+          </div>
+          <div className="shrink-0 flex items-center gap-2">
             <span className={`flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-full border transition-colors ${
               live
                 ? "bg-green-500/10 text-green-400 border-green-500/20"
@@ -70,6 +94,12 @@ export default function LiveStats({ initial }: { initial: LiveStats }) {
               {live ? "Live" : "Reconnexion…"}
             </span>
           </div>
+        </div>
+      </div>
+
+      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
+        <div className="flex justify-between items-center mb-3">
+          <span className="text-gray-300 font-medium">Capacité</span>
           <span className="text-white font-bold">
             {stats.total} / {MAX}
           </span>

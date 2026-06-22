@@ -9,17 +9,24 @@ export type LiveStats = {
   used: number;
   cancelled: number;
   vip: number;
+  revenue: number;
+  individuelPaid: number;
+  gbonhiOffersPaid: number;
 };
 
 async function fetchStats(): Promise<LiveStats> {
-  const [total, valid, used, cancelled, vip] = await Promise.all([
+  const [total, valid, used, cancelled, vip, individuelPaid, gbonhiPaid] = await Promise.all([
     prisma.ticket.count(),
     prisma.ticket.count({ where: { status: "VALID" } }),
     prisma.ticket.count({ where: { status: "USED" } }),
     prisma.ticket.count({ where: { status: "CANCELLED" } }),
     prisma.ticket.count({ where: { ticketType: "GBONHI" } }),
+    prisma.ticket.count({ where: { ticketType: "INDIVIDUEL", status: { not: "CANCELLED" } } }),
+    prisma.ticket.count({ where: { ticketType: "GBONHI", status: { not: "CANCELLED" } } }),
   ]);
-  return { total, valid, used, cancelled, vip };
+  const gbonhiOffersPaid = Math.floor(gbonhiPaid / 6);
+  const revenue = individuelPaid * 10_000 + gbonhiOffersPaid * 50_000;
+  return { total, valid, used, cancelled, vip, revenue, individuelPaid, gbonhiOffersPaid };
 }
 
 export async function GET() {

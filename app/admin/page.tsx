@@ -3,13 +3,17 @@ import Link from "next/link";
 import LiveStats from "@/components/LiveStats";
 
 export default async function AdminDashboard() {
-  const [total, valid, used, cancelled, vip] = await Promise.all([
+  const [total, valid, used, cancelled, vip, individuelPaid, gbonhiPaid] = await Promise.all([
     prisma.ticket.count(),
     prisma.ticket.count({ where: { status: "VALID" } }),
     prisma.ticket.count({ where: { status: "USED" } }),
     prisma.ticket.count({ where: { status: "CANCELLED" } }),
     prisma.ticket.count({ where: { ticketType: "GBONHI" } }),
+    prisma.ticket.count({ where: { ticketType: "INDIVIDUEL", status: { not: "CANCELLED" } } }),
+    prisma.ticket.count({ where: { ticketType: "GBONHI", status: { not: "CANCELLED" } } }),
   ]);
+  const gbonhiOffersPaid = Math.floor(gbonhiPaid / 6);
+  const revenue = individuelPaid * 10_000 + gbonhiOffersPaid * 50_000;
 
   const recentTickets = await prisma.ticket.findMany({
     orderBy: { createdAt: "desc" },
@@ -31,7 +35,7 @@ export default async function AdminDashboard() {
         </Link>
       </div>
 
-      <LiveStats initial={{ total, valid, used, cancelled, vip }} />
+      <LiveStats initial={{ total, valid, used, cancelled, vip, revenue, individuelPaid, gbonhiOffersPaid }} />
 
       {recentTickets.length > 0 && (
         <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
