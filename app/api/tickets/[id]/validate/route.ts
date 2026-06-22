@@ -36,14 +36,19 @@ export async function POST(
         throw Object.assign(new Error("CANCELLED"), { code: "CANCELLED", ticket: t });
       }
 
-      if (t.status === "USED") {
-        throw Object.assign(new Error("ALREADY_USED"), { code: "ALREADY_USED", ticket: t });
-      }
-
-      return tx.ticket.update({
-        where: { id },
+      // Atomic update: only succeeds if status is still VALID at DB level
+      // Prevents double-scan race conditions under concurrent scanners
+      const updated = await tx.ticket.updateMany({
+        where: { id, status: "VALID" },
         data: { status: "USED", usedAt: new Date(), scannedBy: scannedBy || "Scanner" },
       });
+
+      if (updated.count === 0) {
+        const current = await tx.ticket.findUnique({ where: { id } });
+        throw Object.assign(new Error("ALREADY_USED"), { code: "ALREADY_USED", ticket: current });
+      }
+
+      return tx.ticket.findUnique({ where: { id } });
     });
 
     return NextResponse.json({
