@@ -12,7 +12,7 @@ type CreatedTicket = {
 };
 
 export default function CreateTicketPage() {
-  const [form, setForm] = useState({ ticketType: "INDIVIDUEL", note: "" });
+  const [form, setForm] = useState({ ticketType: "INDIVIDUEL", holderName: "", note: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [created, setCreated] = useState<{ tickets: CreatedTicket[]; qrCodes: string[] } | null>(null);
@@ -46,7 +46,7 @@ export default function CreateTicketPage() {
 
   function resetForm() {
     setCreated(null);
-    setForm({ ticketType: "INDIVIDUEL", note: "" });
+    setForm({ ticketType: "INDIVIDUEL", holderName: "", note: "" });
   }
 
   if (created) {
@@ -192,6 +192,21 @@ export default function CreateTicketPage() {
               </label>
             ))}
           </div>
+        </div>
+
+        {/* Nom */}
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-1.5">
+            {form.ticketType === "GBONHI" ? "Nom du groupe / famille" : "Nom de l'invité"}
+          </label>
+          <input
+            type="text"
+            name="holderName"
+            value={form.holderName}
+            onChange={handleChange}
+            placeholder={form.ticketType === "GBONHI" ? "ex : Famille Koné" : "ex : Jean Dupont"}
+            className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition text-sm"
+          />
         </div>
 
         {/* Note */}

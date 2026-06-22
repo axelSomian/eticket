@@ -18,7 +18,7 @@ function cx(font: ReturnType<PDFDocument["embedFont"]> extends Promise<infer T> 
 
 export async function generateTicketPDFPage(
   pdfDoc: PDFDocument,
-  ticket: { id: string; ticketNumber: string; ticketType: string; signature: string },
+  ticket: { id: string; ticketNumber: string; ticketType: string; signature: string; holderName?: string | null },
   settings: GalaSettings
 ) {
   const page     = pdfDoc.addPage([W, H]);
@@ -53,15 +53,26 @@ export async function generateTicketPDFPage(
     color: DARK,
   });
 
-  const placesText = isGbonhi ? "6 personnes incluses" : "1 personne";
-  page.drawText(placesText, {
-    x: cx(fontReg, placesText, 9),
-    y: H - 82,
-    size: 9,
-    font: fontReg,
-    color: DARK,
-    opacity: 0.65,
-  });
+  if (ticket.holderName) {
+    page.drawText(ticket.holderName, {
+      x: cx(fontBold, ticket.holderName, 10),
+      y: H - 78,
+      size: 10,
+      font: fontBold,
+      color: DARK,
+      opacity: 0.75,
+    });
+  } else {
+    const placesText = isGbonhi ? "6 personnes incluses" : "1 personne";
+    page.drawText(placesText, {
+      x: cx(fontReg, placesText, 9),
+      y: H - 82,
+      size: 9,
+      font: fontReg,
+      color: DARK,
+      opacity: 0.65,
+    });
+  }
 
   // ── Séparateur perforé ───────────────────────────────────────────
   const dotY = hdrY;

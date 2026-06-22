@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { ticketType, note } = body;
+  const { ticketType, note, holderName } = body;
 
   const type = ticketType === "GBONHI" ? "GBONHI" : "INDIVIDUEL";
   const quantity = type === "GBONHI" ? 6 : 1;
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     });
 
     const ticket = await prisma.ticket.create({
-      data: { id, ticketNumber, ticketType: type, note: note?.trim() || null, signature },
+      data: { id, ticketNumber, ticketType: type, holderName: holderName?.trim() || null, note: note?.trim() || null, signature },
     });
 
     tickets.push(ticket);

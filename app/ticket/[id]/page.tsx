@@ -53,6 +53,9 @@ export default async function PublicTicketPage({
               {isGbonhi ? "Offre Gbonhi" : "Billet Individuel"}
             </p>
             <p className="text-black font-bold text-lg font-mono">{ticket.ticketNumber}</p>
+            {ticket.holderName && (
+              <p className="text-black/70 text-sm font-medium mt-0.5">{ticket.holderName}</p>
+            )}
           </div>
           {isGbonhi && (
             <div className="bg-black/15 px-3 py-1 rounded-full">

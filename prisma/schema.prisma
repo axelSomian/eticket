@@ -39,6 +39,7 @@ model Ticket {
   id           String       @id @default(uuid())
   ticketNumber String       @unique
   ticketType   TicketType   @default(INDIVIDUEL)
+  holderName   String?
   note         String?
   status       TicketStatus @default(VALID)
   signature    String

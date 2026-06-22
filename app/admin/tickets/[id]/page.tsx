@@ -58,6 +58,7 @@ export default async function TicketDetailPage({
 
           <div className="space-y-3 text-sm">
             <Row label="Offre" value={ticket.ticketType === "GBONHI" ? "Gbonhi (6 places)" : "Individuel"} />
+            {ticket.holderName && <Row label={ticket.ticketType === "GBONHI" ? "Groupe" : "Invité"} value={ticket.holderName} />}
             {ticket.note && <Row label="Note" value={ticket.note} />}
             <Row
               label="Créé le"

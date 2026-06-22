@@ -55,6 +55,7 @@ export default async function TicketsListPage() {
                     <p className="text-amber-400 text-sm font-mono">{t.ticketNumber}</p>
                     <p className="text-gray-400 text-xs mt-0.5">
                       {t.ticketType === "GBONHI" ? "Offre Gbonhi" : "Individuel"}
+                      {t.holderName && <span className="text-gray-300"> · {t.holderName}</span>}
                     </p>
                     <p className="text-gray-600 text-xs mt-1">
                       {new Date(t.createdAt).toLocaleDateString("fr-FR")}
@@ -91,13 +92,16 @@ export default async function TicketsListPage() {
                     <tr key={t.id} className="hover:bg-gray-800/50 transition">
                       <td className="px-6 py-4 text-sm font-mono text-amber-400 whitespace-nowrap">{t.ticketNumber}</td>
                       <td className="px-6 py-4">
-                        <span className={`text-xs px-2 py-0.5 rounded-full border ${
-                          t.ticketType === "GBONHI"
-                            ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
-                            : "bg-gray-700 text-gray-300 border-gray-600"
-                        }`}>
-                          {t.ticketType === "GBONHI" ? "Gbonhi" : "Individuel"}
-                        </span>
+                        <div className="flex flex-col gap-0.5">
+                          <span className={`text-xs px-2 py-0.5 rounded-full border w-fit ${
+                            t.ticketType === "GBONHI"
+                              ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                              : "bg-gray-700 text-gray-300 border-gray-600"
+                          }`}>
+                            {t.ticketType === "GBONHI" ? "Gbonhi" : "Individuel"}
+                          </span>
+                          {t.holderName && <span className="text-gray-400 text-xs pl-1">{t.holderName}</span>}
+                        </div>
                       </td>
                       <td className="px-6 py-4">
                         <span className={`text-xs px-2 py-0.5 rounded-full border ${statusClass(t.status)}`}>
