@@ -1,0 +1,38 @@
+name: Backup base de données
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # Chaque jour à 2h du matin (UTC)
+  workflow_dispatch:       # Permet aussi de lancer manuellement depuis GitHub
+
+permissions:
+  contents: write
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Installer le client PostgreSQL
+        run: sudo apt-get install -y postgresql-client
+
+      - name: Exporter les tickets
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          mkdir -p backups
+          DATE=$(date +%Y-%m-%d)
+          psql "$DATABASE_URL" -c "\COPY \"Ticket\" TO 'backups/tickets-${DATE}.csv' CSV HEADER"
+          COUNT=$(wc -l < "backups/tickets-${DATE}.csv")
+          echo "✓ Export OK — ${COUNT} lignes (headers inclus)"
+
+      - name: Commit et push
+        run: |
+          git config user.email "backup-bot@gala"
+          git config user.name "Backup Bot"
+          git add backups/
+          git diff --staged --quiet && echo "Rien de nouveau à sauvegarder" || \
+            (git commit -m "backup: tickets $(date +%Y-%m-%d)" && git push)
