@@ -41,6 +41,7 @@ jobs:
           git config user.email "backup-bot@gala"
           git config user.name "Backup Bot"
           git checkout backup 2>/dev/null || git checkout -b backup
+          git pull --rebase origin backup 2>/dev/null || true
           git add backups/
           git diff --staged --quiet && echo "Rien de nouveau à sauvegarder" || \
             (git commit -m "backup: tickets $(date +%Y-%m-%d)" && git push -u origin backup)
