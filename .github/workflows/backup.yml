@@ -32,7 +32,7 @@ jobs:
           mkdir -p backups
           DATE=$(date +%Y-%m-%d)
           psql "$DATABASE_URL" -c "\COPY \"Ticket\" TO 'backups/tickets-${DATE}.csv' CSV HEADER"
-          pg_dump "$DATABASE_URL" --table='"Ticket"' --data-only --no-owner --no-privileges -f "backups/tickets-${DATE}.sql"
+          /usr/lib/postgresql/17/bin/pg_dump "$DATABASE_URL" --table='"Ticket"' --data-only --no-owner --no-privileges -f "backups/tickets-${DATE}.sql"
           COUNT=$(wc -l < "backups/tickets-${DATE}.csv")
           echo "✓ Export OK — ${COUNT} lignes (headers inclus)"
 
